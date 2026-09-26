@@ -1,0 +1,11 @@
+---
+project_dir: "/opt/crud-mongodb"
+image_tag: "stage"
+
+# Note: In production, you would encrypt these DB credentials using Ansible Vault
+mongodb_username: "admin"
+mongodb_password: "root"
+mongodb_db: "user-account"
+dockerhub_username: "adamdayniold"
+mongodb_adminusername: "admin"
+mongodb_adminpassword: "root"

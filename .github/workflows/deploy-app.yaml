@@ -1,0 +1,29 @@
+name: Ansible Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allows you to press a button to manually update dropletB
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Ansible and DigitalOcean collection
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.digitalocean
+
+      # Sets up the private key needed to SSH into the droplets securely
+      - name: Set up SSH Private Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
+
+      - name: Run Playbook
+        run: ansible-playbook site.yml
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}

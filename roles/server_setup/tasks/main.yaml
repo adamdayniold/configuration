@@ -1,0 +1,104 @@
+---
+# ==========================================
+# 1. SECURITY & FIREWALL CONFIGURATION
+# ==========================================
+- name: Ensure UFW (Firewall) is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: yes
+
+- name: Allow SSH traffic through firewall
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Allow HTTP (80) and HTTPS (443) traffic for Nginx
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
+
+- name: Enable Firewall
+  community.general.ufw:
+    state: enabled
+    policy: deny
+
+# ==========================================
+# 2. DOCKER & DOCKER COMPOSE INSTALLATION
+# ==========================================
+- name: Install required system packages for Docker
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - docker.io
+      - docker-compose-v2
+    state: present
+
+- name: Ensure Docker service is running and enabled
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+# ==========================================
+# 3. APPLICATION CONFIGURATION & DEPLOYMENT
+# ==========================================
+- name: Ensure project directory exists
+  ansible.builtin.file:
+    path: "{{ project_dir }}"
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: Copy Docker Compose configurations to server
+  ansible.builtin.copy:
+    src: "{{ item }}" # ◄ Ansible automatically searches your role's files/ folder
+    dest: "{{ project_dir }}/{{ item }}"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+  loop:
+    - docker-compose.yaml
+    - docker-compose.prod.yaml
+
+- name: Deploy dynamic Nginx configuration from template
+  ansible.builtin.template: # ◄ Changed from copy to template for best practice
+    src: nginx.conf.j2 # ◄ Automatically looks in roles/server_setup/templates/
+    dest: "{{ project_dir }}/nginx.conf"
+    mode: "0644"
+    owner: "root"
+    group: "root"
+
+- name: Create secure .env file with secrets
+  ansible.builtin.copy:
+    dest: "{{ project_dir }}/.env"
+    mode: "0600"
+    owner: "root"
+    group: "root"
+    content: |
+      IMAGE_TAG={{ image_tag }}
+      MONGODB_USERNAME={{ mongodb_username }}
+      MONGODB_PASSWORD={{ mongodb_password }}
+      MONGODB_DB={{ mongodb_db }}
+      DOCKERHUB_USERNAME={{ dockerhub_username }}
+      MONGODB_ADMINUSERNAME={{ mongodb_adminusername }}
+      MONGODB_ADMINPASSWORD={{ mongodb_adminpassword }}
+
+- name: Pull Latest Images and Restart Docker Compose Stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ project_dir }}"
+    files:
+      - docker-compose.yaml
+      - docker-compose.prod.yaml
+    state: present
+    pull: always

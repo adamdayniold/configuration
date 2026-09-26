@@ -1,0 +1,14 @@
+# Ansible retry files (generated when a playbook task fails)
+*.retry
+
+# Volatile python cache and compiled execution code
+*.pyc
+*.pyo
+__pycache__/
+
+# Local configuration adjustments or log dumps
+ansible.log
+
+# If you use Ansible Vault, you can optionally store your master password locally
+# (Crucial: ensure this local text file is never committed to Git)
+.vault_password
