@@ -8,4 +8,4 @@ keyed_groups:
 
 # Enforces that only droplets with this exact tag enter our playbook run
 filters:
-  - "tags: crud-mongodb"
+  - "crud-mongodb"
