@@ -1,7 +1,12 @@
 plugin: community.digitalocean.digitalocean
 api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
-
 # Pulls all DO droplets but classifies them by their tags automatically
+attributes:
+  - id
+  - name
+  - tags
+  - networks
+
 keyed_groups:
   - key: tags
     prefix: tag
