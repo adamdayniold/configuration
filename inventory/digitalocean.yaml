@@ -1,4 +1,4 @@
-plugin: community.digitalocean.digitalocean
+plugin: digitalocean.cloud.droplets
 api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
 # Pulls all DO droplets but classifies them by their tags automatically
 attributes:
