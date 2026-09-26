@@ -21,10 +21,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
 
-      - name: Install Ansible Dependencies
+      - name: Set up Python & Install Dependencies
         run: |
-          pip install pydo requests
-          ansible-galaxy collection install digitalocean.cloud
+          python -m pip install --upgrade pip
+          sudo pip install pydo requests ansible
+
+      - name: Install Official DigitalOcean Collection
+        run: |
+          ansible-galaxy collection install digitalocean.cloud --force
 
       - name: Run Playbook
         run: ansible-playbook -i inventory/digitalocean.yaml site.yaml

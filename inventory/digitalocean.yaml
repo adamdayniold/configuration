@@ -9,7 +9,7 @@ attributes:
   - networks
 
 keyed_groups:
-  - key: do_tags | default([])
+  - key: tags
     prefix: tag
     separator: "_"
 
