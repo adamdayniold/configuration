@@ -21,16 +21,27 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
 
-      - name: Generate Dynamic Host File on the Fly
+      - name: Diagnose and Generate Host File
         run: |
-          IP=$(curl -s -X GET "https://api.digitalocean.com/v2/droplets" \
-            -H "Authorization: Bearer ${{ secrets.DIGITALOCEAN_TOKEN }}" \
-            | jq -r '.droplets[] | select(.tags[]? == "crud_mongodb") | .networks.v4[] | select(.type=="public") | .ip_address' | head -n 1)
+          echo "Fetching droplets from DigitalOcean API..."
+          RESPONSE=$(curl -s -X GET "https://api.digitalocean.com/v2/droplets" \
+            -H "Authorization: Bearer ${{ secrets.DIGITALOCEAN_TOKEN }}")
 
-          echo "Discovered Droplet IP: '$IP'"
+          echo "Raw API Response Summary:"
+          echo "$RESPONSE" | jq -r '.droplets[]? | "Droplet: \(.name) | Tags: \(.tags | join(", "))"'
+
+          # Try to grab the IP using your tag, or fallback to the first available droplet if tag is missing
+          IP=$(echo "$RESPONSE" | jq -r '.droplets[] | select(.tags[]? == "crud_mongodb") | .networks.v4[] | select(.type=="public") | .ip_address' | head -n 1)
 
           if [ -z "$IP" ] || [ "$IP" = "null" ]; then
-            echo "Error: No public IP found for droplets with tag 'crud_mongodb'!"
+            echo "Warning: No droplet found with tag 'crud_mongodb'. Falling back to the first available droplet..."
+            IP=$(echo "$RESPONSE" | jq -r '.droplets[0].networks.v4[] | select(.type=="public") | .ip_address' | head -n 1)
+          fi
+
+          echo "Using Droplet IP: '$IP'"
+
+          if [ -z "$IP" ] || [ "$IP" = "null" ]; then
+            echo "Error: No public IP could be found at all in this DigitalOcean account!"
             exit 1
           fi
 
