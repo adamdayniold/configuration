@@ -21,6 +21,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
 
+      - name: Install Ansible Dependencies
+        run: |
+          pip install ansible requests
+          ansible-galaxy collection install community.digitalocean community.docker community.general
+
       - name: Run Playbook
         run: ansible-playbook site.yaml
         env:
