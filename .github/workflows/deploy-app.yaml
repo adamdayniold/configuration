@@ -10,10 +10,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Ansible and DigitalOcean collection
-        run: |
-          pip install ansible
-          ansible-galaxy collection install community.digitalocean
+      # - name: Install Ansible and DigitalOcean collection
+      #   run: |
+      #     pip install ansible
+      #     ansible-galaxy collection install community.digitalocean
 
       # Sets up the private key needed to SSH into the droplets securely
       - name: Set up SSH Private Key
@@ -21,16 +21,20 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
 
-      - name: Set up Python & Install Dependencies
+      - name: Generate Dynamic Host File via API
         run: |
-          python -m pip install --upgrade pip
-          sudo pip install pydo requests ansible
+          # Query DigitalOcean API directly for the Droplet IP matching your tag
+          IP=$(curl -s -X GET "https://api.digitalocean.com/v2/droplets" \
+            -H "Authorization: Bearer ${{ secrets.DIGITALOCEAN_TOKEN }}" \
+            | jq -r '.droplets[] | select(.tags | index("crud_mongodb")) | .networks.v4[] | select(.type=="public") | .ip_address')
 
-      - name: Install Official DigitalOcean Collection
-        run: |
-          ansible-galaxy collection install digitalocean.cloud --force
+          echo "Discovered Droplet IP: $IP"
 
+          # Create inventory directory and write standard INI format matching your playbook group
+          mkdir -p inventory
+          echo -e "[tag_crud_mongodb]\n$IP ansible_user=root" > inventory/hosts.ini
+        shell: bash
       - name: Run Playbook
-        run: ansible-playbook -i inventory/digitalocean.yaml site.yaml
+        run: ansible-playbook -i inventory/hosts.ini site.yaml
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
