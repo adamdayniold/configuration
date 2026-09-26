@@ -1,6 +1,6 @@
 ---
 - name: Full Production-Grade Server Setup and Deployment
-  hosts: tag_stage # ◄ Changed to match your Dynamic Inventory tag group
+  hosts: tag_crud_mongodb # ◄ Changed to match your Dynamic Inventory tag group
   become: true
 
   roles:
