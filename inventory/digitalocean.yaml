@@ -1,13 +1,10 @@
 plugin: digitalocean.cloud.droplets
 api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
 # Pulls all DO droplets but classifies them by their tags automatically
-attributes:
-  - id
-  - name
-  - tags
-  - networks
-
 keyed_groups:
-  - key: tags
+  - key: do_tags | default([])
     prefix: tag
     separator: "_"
+
+compose:
+  ansible_host: networks.v4 | selectattr('type', 'eq', 'public') | map(attribute='ip_address') | first
