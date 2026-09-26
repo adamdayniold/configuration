@@ -27,6 +27,6 @@ jobs:
           ansible-galaxy collection install community.digitalocean community.docker community.general
 
       - name: Run Playbook
-        run: ansible-playbook site.yaml
+        run: ansible-playbook -i inventory/digitalocean.yaml site.yaml
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
